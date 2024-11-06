@@ -15,7 +15,7 @@ file_directory = os.path.abspath(os.path.join(os.path.abspath(__file__), '..'))
 parent_directory = os.path.abspath(os.path.join(file_directory, '..'))
 image_path = os.path.join(parent_directory, 'src', 'bicimad.png')
 rdf_path = os.path.join(parent_directory, 'rdf', rdf_file)
-
+pickle_path = os.path.join(parent_directory, 'rdf', 'bike_graph.pkl')
 
 if __name__ == "__main__":
     with center_col:
@@ -54,29 +54,30 @@ if __name__ == "__main__":
     category = st.sidebar.text_area(
         "WikiData class:",
         value="""Q875538""",
-        height=50,
+        height=20,
     )
     limit = st.sidebar.text_area(
         "Limit of WikiData entities collected:",
         value="""10""",
-        height=50,
+        height=20,
     )
     max_distance = st.sidebar.text_area(
         "Distance threshold (km):",
         value="""0.1""",
-        height=50,
+        height=20,
     )
     out_file = st.sidebar.text_area(
-        "Distance threshold (km):",
+        "Name of output file:",
         value="""output.ttl""",
-        height=50,
+        height=20,
     )
 
     # Button in the sidebar to execute the query
     if st.sidebar.button("Run annotator"):
         try:
             # Execute the SPARQL query
-            annotate_category(bike_graph=graph, category=category, limit=int(limit), max_dist=float(max_distance), out=out_file)
+            print(f"The output will be found at: {os.path.join(parent_directory, 'app', out_file)}")
+            annotate_category(bike_graph=graph, category=category, limit=int(limit), max_dist=float(max_distance), out=os.path.join(parent_directory, 'app', out_file))
 
             # Display the results in a table if there is data
             st.subheader("Annotation successful.")

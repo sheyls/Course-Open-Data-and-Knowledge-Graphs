@@ -151,10 +151,11 @@ def join_by_distance(bike_graph, wikidata_graph, max_distance=0.1, debug=False):
     # Execute the query
     if debug:
         out1.serialize(format='csv', destination='output5.csv')
-        print("Done 5")
+        print("Done")
 
     print("All coordinates found...")
-    print("Annotating...", end="")
+    print("Annotating...")
+
     for row in out1:
         coord1 = (row['latitude'], row['longitude'])
         coord2 = (row['latitude2'], row['longitude2'])
@@ -162,7 +163,7 @@ def join_by_distance(bike_graph, wikidata_graph, max_distance=0.1, debug=False):
         if dist < max_distance:
             g.add(row['place'], geo.Touches, row['point'])
 
-    print("\rAnnotation complete.")
+    print("Annotation complete.")
     return g
 
 
@@ -170,16 +171,17 @@ def annotate_category(bike_graph, category="Q2385804", max_dist=0.1, limit=10, o
     """
     Increases the graph given to now add places in Madrid under the category of WikiData and gives them the relationship
     geo:Touches with BikeStation's based on the maximim distance used as threshold and prints it out as a ttl.
+    :param limit: limit of instances of the class to use
     :param bike_graph: rdflib graph containing the BikeStation's
     :param category: category of wikidata, given as a string e.g. "Q2385804"
     :param max_dist: max distance in KM
     :param out: out file path
     :return:
     """
-    print(category, max_dist, limit, out)
     wikidata_graph = query_places_as_graph(category, limit=limit)
     g = join_by_distance(bike_graph, wikidata_graph, max_distance=max_dist)
-    g.serialize(out, format='turtle')
+    print(f"Saving to the file {out}")
+    g.serialize(destination=out, format='turtle')
 
 
 if __name__ == '__main__':
