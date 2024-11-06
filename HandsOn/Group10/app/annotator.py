@@ -2,6 +2,7 @@ import streamlit as st
 from rdflib import Graph
 import os
 from wikidata_query import *
+from wikidata_query import *
 
 # Set as currently used name of the RDF file
 rdf_file = "subset-graph-updated.ttl"
@@ -52,35 +53,21 @@ if __name__ == "__main__":
 
     # Section for SPARQL queries in the sidebar
     st.sidebar.subheader("SPARQL Query")
-    query = st.sidebar.text_area(
-        "Write your SPARQL query here:",
+    category = st.sidebar.text_area(
+        "Write the WikiData class here:",
         value="""
-        SELECT ?subject ?predicate ?object
-        WHERE {
-            ?subject ?predicate ?object .
-        }
-        LIMIT 10
+        Q875538
         """,
         height=300,
     )
 
     # Button in the sidebar to execute the query
-    if st.sidebar.button("Run Query"):
+    if st.sidebar.button("Run annotator"):
         try:
             # Execute the SPARQL query
-            results = graph.query(query)
-
-            # Create a list to store the results
-            data = []
-            for row in results:
-                # Show only the end of the URI or text, not the full link
-                data.append([str(cell).split('/')[-1] for cell in row])
+            graph.query(category)
 
             # Display the results in a table if there is data
-            if data:
-                st.subheader("Query Results:")
-                st.table(data)
-            else:
-                st.write("No results found for the query.")
+            st.subheader("Annotation successful.")
         except Exception as e:
-            st.error(f"Query error: {e}")
+            st.error(f"Execution error: {e}")

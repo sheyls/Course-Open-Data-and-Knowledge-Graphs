@@ -19,7 +19,7 @@ TYPES_OF_INTEREST = {
 }
 
 
-def _query_places(queried_class, limit: int = 2):
+def _query_places(queried_class, limit: int = 10):
     sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
 
     # From https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service/queries/examples#Cats
@@ -52,8 +52,8 @@ def _query_places(queried_class, limit: int = 2):
     return df
 
 
-def query_places_as_graph(queried_class="Q2385804"):
-    df = _query_places(queried_class)
+def query_places_as_graph(queried_class="Q2385804", limit=10):
+    df = _query_places(queried_class, limit=limit)
     # Create an RDF graph
     g = Graph()
 
@@ -85,7 +85,7 @@ def get_distance(coords_1, coords_2):
     return geodesic(coords_1, coords_2).km
 
 
-def join_by_distance(bike_graph, wikidata_graph, max_distance=0.1):
+def join_by_distance(bike_graph, wikidata_graph, max_distance=0.1, debug=False):
     """
     Increases the graph given to now add places in the wikidata graph and gives them the relationship
     geo:Touches with BikeStation's based on the maximim distance used as threshold and returns the new graph
@@ -102,89 +102,35 @@ def join_by_distance(bike_graph, wikidata_graph, max_distance=0.1):
     schema = Namespace("https://schema.org/")
     geo = Namespace("http://www.w3.org/2003/01/geo/wgs84_pos#")
     wikidata = Namespace("http://www.wikidata.org/entity/")
-    wikidata_prop = Namespace("http://www.wikidata.org/prop/direct/")
-    wikidata_q = Namespace("http://www.wikidata.org/entity/Q")
 
-    # query = """
-    #     SELECT ?itinerary (Count(*) AS ?amount)
-    #     WHERE {
-    #         ?trip a ns1:BikeTrip ;
-    #               schema:itinerary ?itinerary .
-    #         # ?itinerary schema:latitude ?latitude ;
-    #         #             schema:longitude ?longitude .
-    #         # ?point geo:latitude ?latitude2 ;
-    #         #        geo:longitude ?longitude2 ;
-    #         #        a ?class .
-    #     }
-    #     GROUP BY ?itinerary
-    #     """
-    # out1 = g.query(query, initNs={"ns1": ns1, "schema": schema})
-    # # Execute the query
-    # print(out1.serialize(format='csv', destination='output1.csv'))
-    #
-    # query = """
-    #         SELECT ?itinerary ?latitude ?longitude (Count(*) AS ?amount)
-    #         WHERE {
-    #             ?trip a ns1:BikeTrip ;
-    #                   schema:itinerary ?itinerary .
-    #             OPTIONAL {
-    #              ?itinerary schema:latitude ?latitude ;
-    #                         schema:longitude ?longitude .
-    #             }.
-    #             # ?point geo:latitude ?latitude2 ;
-    #             #        geo:longitude ?longitude2 ;
-    #             #        a ?class .
-    #         }
-    #         GROUP BY ?itinerary ?latitude ?longitude
-    #         """
-    # out1 = g.query(query, initNs={"ns1": ns1, "schema": schema, "geo": geo})
-    # # Execute the query
-    # print(out1.serialize(format='csv', destination='output2.csv'))
+    if debug:
+        query = """
+                SELECT ?place ?latitude ?longitude
+                WHERE {
+                    ?place a ns1:BikeStation  ;
+                           schema:latitude ?latitude ;
+                           schema:longitude ?longitude .
+                }
+                """
 
-    # query = """
-    #             SELECT ?itinerary ?class (Count(*) AS ?amount)
-    #             WHERE {
-    #                 ?trip a ns1:BikeTrip ;
-    #                       schema:itinerary ?itinerary .
-    #                 ?itinerary schema:latitude ?latitude ;
-    #                             schema:longitude ?longitude .
-    #                 ?point geo:latitude ?latitude2 ;
-    #                        geo:longitude ?longitude2 ;
-    #                        a ?class .
-    #             }
-    #             GROUP BY ?itinerary ?class
-    #             """
-    # out1 = g.query(query, initNs={"ns1": ns1, "schema": schema, "geo": geo})
-    # # Execute the query
-    # print(out1.serialize(format='csv', destination='output3.csv'))
+        out1 = g.query(query, initNs={"ns1": ns1, "schema": schema, "geo": geo, "wikidata": wikidata})
+        # Execute the query
+        out1.serialize(format='csv', destination='output5.1.csv')
+        print("Done 5.1")
 
-    # query = """
-    #         SELECT ?place ?latitude ?longitude
-    #         WHERE {
-    #             ?place a ns1:BikeStation  ;
-    #                    schema:latitude ?latitude ;
-    #                    schema:longitude ?longitude .
-    #         }
-    #         """
-    #
-    # out1 = g.query(query, initNs={"ns1": ns1, "schema": schema, "geo": geo, "wikidata": wikidata})
-    # # Execute the query
-    # out1.serialize(format='csv', destination='output5.1.csv')
-    # print("Done 5.1")
-    #
-    # query = """
-    #         SELECT ?class ?point ?latitude2 ?longitude2
-    #         WHERE {
-    #             ?point geo:lat ?latitude2 ;
-    #                    geo:long ?longitude2 ;
-    #                    a ?class .
-    #         }
-    #         """
-    #
-    # out1 = g.query(query, initNs={"ns1": ns1, "schema": schema, "geo": geo, "wikidata": wikidata})
-    # # Execute the query
-    # out1.serialize(format='csv', destination='output5.2.csv')
-    # print("Done 5.2")
+        query = """
+                SELECT ?class ?point ?latitude2 ?longitude2
+                WHERE {
+                    ?point geo:lat ?latitude2 ;
+                           geo:long ?longitude2 ;
+                           a ?class .
+                }
+                """
+
+        out1 = g.query(query, initNs={"ns1": ns1, "schema": schema, "geo": geo, "wikidata": wikidata})
+        # Execute the query
+        out1.serialize(format='csv', destination='output5.2.csv')
+        print("Done 5.2")
 
     query = """
         SELECT ?place ?latitude ?longitude ?class ?point ?latitude2 ?longitude2 
@@ -192,6 +138,7 @@ def join_by_distance(bike_graph, wikidata_graph, max_distance=0.1):
             ?place a ns1:BikeStation  ;
                    schema:latitude ?latitude ;
                    schema:longitude ?longitude .
+                   
             ?point geo:lat ?latitude2 ;
                    geo:long ?longitude2 ;
                    a ?class .
@@ -200,10 +147,11 @@ def join_by_distance(bike_graph, wikidata_graph, max_distance=0.1):
 
     out1 = g.query(query, initNs={"ns1": ns1, "schema": schema, "geo": geo, "wikidata": wikidata})
     # Execute the query
-    out1.serialize(format='csv', destination='output5.csv')
-    print("Done 5")
+    if debug:
+        out1.serialize(format='csv', destination='output5.csv')
+        print("Done 5")
 
-    for _, row in out1.iterrows():
+    for _, row in out1:
         coord1 = (row['latitude'], row['longitude'])
         coord2 = (row['latitude2'], row['longitude2'])
         dist = get_distance(coord1, coord2)
@@ -213,7 +161,7 @@ def join_by_distance(bike_graph, wikidata_graph, max_distance=0.1):
     return g
 
 
-def annotate_category(bike_graph, category="Q2385804", max_dist=0.1, out="./output.ttl"):
+def annotate_category(bike_graph, category="Q2385804", max_dist=0.1, limit=10, out="./output.ttl"):
     """
     Increases the graph given to now add places in Madrid under the category of WikiData and gives them the relationship
     geo:Touches with BikeStation's based on the maximim distance used as threshold and prints it out as a ttl.
@@ -223,7 +171,7 @@ def annotate_category(bike_graph, category="Q2385804", max_dist=0.1, out="./outp
     :param out: out file path
     :return:
     """
-    g = join_by_distance(bike_graph, query_places_as_graph(category), max_distance=0.1)
+    g = join_by_distance(bike_graph, query_places_as_graph(category, limit=limit), max_distance=max_dist)
     g.serialize(out, format='turtle')
 
 
