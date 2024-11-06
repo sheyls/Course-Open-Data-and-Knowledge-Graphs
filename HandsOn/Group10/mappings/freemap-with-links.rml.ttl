@@ -3,8 +3,8 @@
 @prefix ql: <http://semweb.mmlab.be/ns/ql#> .
 @prefix fnml: <http://semweb.mmlab.be/ns/fnml#> .
 @prefix fno: <https://w3id.org/function/ontology#> .
-@prefix bicimap: <https://BiciMad.es/ontology#> .
-@prefix schema: <https://schema.org/> .
+@prefix bicimap: <https://www.BiciMad.es/ontology#> .
+@prefix schema: <https://www.schema.org/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
@@ -108,7 +108,6 @@
             rr:template "http://www.BiciMad.es/entity/Place/{district}"
         ]
     ] .
-
 
 
 
