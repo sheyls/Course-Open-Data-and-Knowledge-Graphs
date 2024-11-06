@@ -1,3 +1,5 @@
+import traceback
+
 import streamlit as st
 from rdflib import Graph
 import os
@@ -28,22 +30,18 @@ if __name__ == "__main__":
         g = Graph()
         try:
             # Load the Turtle file from a specific path
-            g.parse(rdf_path, format="turtle")  # Make sure the path is correct
+            if os.path.exists(pickle_path):
+                print("Loading from pkl...")
+                with open(pickle_path, 'rb') as f:
+                    g = pickle.load(f)
+            else:
+                g.parse(rdf_path, format="turtle")
+                with open(pickle_path, 'wb') as f:
+                    pickle.dump(g, f)
+
             st.sidebar.write("Turtle file loaded successfully.")
         except Exception as e:
             st.sidebar.error(f"Error loading the Turtle file: {e}")
-        return g
-
-
-    @st.cache_resource
-    def load_places_of_interest():
-        g = Graph()
-        try:
-            # Load the Turtle file from a specific path
-            g = get_all_places_of_interest()# Make sure the path is correct
-            st.sidebar.write("Queries ran successfully.")
-        except Exception as e:
-            st.sidebar.error(f"Error running queries: {e}")
         return g
 
     # Initialize the graph
@@ -52,22 +50,36 @@ if __name__ == "__main__":
     st.sidebar.write(f"The graph contains {len(graph)} triples.")
 
     # Section for SPARQL queries in the sidebar
-    st.sidebar.subheader("SPARQL Query")
+    st.sidebar.subheader("Annotator")
     category = st.sidebar.text_area(
-        "Write the WikiData class here:",
-        value="""
-        Q875538
-        """,
-        height=300,
+        "WikiData class:",
+        value="""Q875538""",
+        height=50,
+    )
+    limit = st.sidebar.text_area(
+        "Limit of WikiData entities collected:",
+        value="""10""",
+        height=50,
+    )
+    max_distance = st.sidebar.text_area(
+        "Distance threshold (km):",
+        value="""0.1""",
+        height=50,
+    )
+    out_file = st.sidebar.text_area(
+        "Distance threshold (km):",
+        value="""output.ttl""",
+        height=50,
     )
 
     # Button in the sidebar to execute the query
     if st.sidebar.button("Run annotator"):
         try:
             # Execute the SPARQL query
-            graph.query(category)
+            annotate_category(bike_graph=graph, category=category, limit=int(limit), max_dist=float(max_distance), out=out_file)
 
             # Display the results in a table if there is data
             st.subheader("Annotation successful.")
         except Exception as e:
             st.error(f"Execution error: {e}")
+            st.error(traceback.format_exc())

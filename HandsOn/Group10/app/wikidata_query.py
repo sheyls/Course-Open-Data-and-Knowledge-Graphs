@@ -53,6 +53,7 @@ def _query_places(queried_class, limit: int = 10):
 
 
 def query_places_as_graph(queried_class="Q2385804", limit=10):
+    print(f"Getting all entities subclass of {queried_class}")
     df = _query_places(queried_class, limit=limit)
     # Create an RDF graph
     g = Graph()
@@ -145,19 +146,23 @@ def join_by_distance(bike_graph, wikidata_graph, max_distance=0.1, debug=False):
         }
         """
 
+    print("Running queries...")
     out1 = g.query(query, initNs={"ns1": ns1, "schema": schema, "geo": geo, "wikidata": wikidata})
     # Execute the query
     if debug:
         out1.serialize(format='csv', destination='output5.csv')
         print("Done 5")
 
-    for _, row in out1:
+    print("All coordinates found...")
+    print("Annotating...", end="")
+    for row in out1:
         coord1 = (row['latitude'], row['longitude'])
         coord2 = (row['latitude2'], row['longitude2'])
         dist = get_distance(coord1, coord2)
         if dist < max_distance:
             g.add(row['place'], geo.Touches, row['point'])
-    print("Done")
+
+    print("\rAnnotation complete.")
     return g
 
 
@@ -171,7 +176,9 @@ def annotate_category(bike_graph, category="Q2385804", max_dist=0.1, limit=10, o
     :param out: out file path
     :return:
     """
-    g = join_by_distance(bike_graph, query_places_as_graph(category, limit=limit), max_distance=max_dist)
+    print(category, max_dist, limit, out)
+    wikidata_graph = query_places_as_graph(category, limit=limit)
+    g = join_by_distance(bike_graph, wikidata_graph, max_distance=max_dist)
     g.serialize(out, format='turtle')
 
 
